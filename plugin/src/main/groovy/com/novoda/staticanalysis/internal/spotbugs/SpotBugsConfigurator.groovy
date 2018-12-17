@@ -7,6 +7,7 @@ import com.novoda.staticanalysis.Violations
 import com.novoda.staticanalysis.internal.CodeQualityConfigurator
 import com.novoda.staticanalysis.internal.findbugs.CollectFindbugsViolationsTask
 import com.novoda.staticanalysis.internal.findbugs.GenerateFindBugsHtmlReport
+import org.gradle.api.Action
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.ConfigurableFileTree
@@ -41,6 +42,13 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
     @Override
     protected Class<?> getTaskClass() {
         SpotBugsTask
+    }
+
+    @Override
+    protected Action<SpotBugsExtension> getDefaultConfiguration() {
+        return { extension ->
+            extension.ext.htmlReportEnabled = { boolean enabled -> this.htmlReportEnabled = enabled }
+        }
     }
 
     @Override
