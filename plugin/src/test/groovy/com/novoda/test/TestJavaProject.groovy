@@ -7,7 +7,8 @@ final class TestJavaProject extends TestProject<TestJavaProject> {
 buildscript {
     dependencies {
         classpath 'com.novoda:gradle-static-analysis-plugin:local'
-    }
+    }          
+    ${project.additionalBuildscriptConfig}
 }
 plugins {
     ${formatPlugins(project)} 

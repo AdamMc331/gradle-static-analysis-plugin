@@ -4,7 +4,8 @@ class TestAndroidProject extends TestProject<TestAndroidProject> {
     private static final Closure<String> TEMPLATE = { TestAndroidProject project ->
         """
 buildscript {
-    repositories { 
+    repositories {              
+        gradlePluginPortal()
         google()
         jcenter()
     }
@@ -12,6 +13,7 @@ buildscript {
         classpath 'com.android.tools.build:gradle:3.1.4'
         classpath 'com.novoda:gradle-static-analysis-plugin:local'
     }
+    ${project.additionalBuildscriptConfig}
 }
 plugins {
     ${formatPlugins(project)}

@@ -26,11 +26,11 @@ dependencies {
     implementation libraries.gradleApi
     compileOnly gradlePlugins.spotbugs
 
-    testCompile libraries.gradleTestKit
-    testCompile libraries.junit
-    testCompile libraries.truth
-    testCompile libraries.guava
-    testCompile libraries.findbugs.annotations
-    testCompile libraries.mockito
+    testImplementation libraries.gradleTestKit
+    testImplementation libraries.junit
+    testImplementation libraries.truth
+    testImplementation libraries.guava
+    testImplementation libraries.findbugs.annotations
+    testImplementation libraries.mockito
 
 }

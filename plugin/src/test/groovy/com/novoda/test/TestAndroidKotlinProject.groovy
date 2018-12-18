@@ -13,6 +13,7 @@ buildscript {
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.21'
         classpath 'com.novoda:gradle-static-analysis-plugin:local'
     }
+    ${project.additionalBuildscriptConfig}
 }
 plugins {
     ${formatPlugins(project)}   

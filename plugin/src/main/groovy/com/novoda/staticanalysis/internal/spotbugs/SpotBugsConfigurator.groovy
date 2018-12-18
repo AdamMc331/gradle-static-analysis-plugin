@@ -1,7 +1,6 @@
 package com.novoda.staticanalysis.internal.spotbugs
 
 import com.github.spotbugs.SpotBugsExtension
-import com.github.spotbugs.SpotBugsPlugin
 import com.github.spotbugs.SpotBugsTask
 import com.novoda.staticanalysis.Violations
 import com.novoda.staticanalysis.internal.CodeQualityConfigurator
@@ -31,7 +30,7 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
 
     @Override
     protected Object getToolPlugin() {
-        SpotBugsPlugin
+        QuietSpotBugsPlugin
     }
 
     @Override
@@ -53,7 +52,7 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
 
     @Override
     protected void configureAndroidVariant(variant) {
-        SpotBugsTask task = project.tasks.maybeCreate("spotbugs${variant.name.capitalize()}", SpotBugsTask)
+        SpotBugsTask task = project.tasks.maybeCreate("spotbugs${variant.name.capitalize()}", QuietSpotBugsPlugin.Task)
         List<File> androidSourceDirs = variant.sourceSets.collect { it.javaDirectories }.flatten()
         task.with {
             description = "Run SpotBugs analysis for ${variant.name} classes"

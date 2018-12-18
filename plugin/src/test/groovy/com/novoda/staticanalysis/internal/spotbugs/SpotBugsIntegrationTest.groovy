@@ -1,6 +1,7 @@
 package com.novoda.staticanalysis.internal.spotbugs
 
 import com.google.common.truth.Truth
+import com.novoda.test.TestAndroidProject
 import com.novoda.test.TestProject
 import com.novoda.test.TestProjectRule
 import org.gradle.testkit.runner.TaskOutcome
@@ -16,7 +17,9 @@ import static com.novoda.test.TestProjectSubject.assumeThat
 @RunWith(Parameterized.class)
 class SpotBugsIntegrationTest {
 
-    @Parameterized.Parameters(name = "{0}")
+    public static final String SPOTBUGS_PLUGIN_VERSION = '1.6.6'
+
+    @Parameterized.Parameters(name = '{0}')
     static Iterable<TestProjectRule> rules() {
         return [TestProjectRule.forJavaProject(), TestProjectRule.forAndroidProject()]
     }
@@ -351,12 +354,12 @@ class SpotBugsIntegrationTest {
         projectRule.newProject()
                 .withSourceSet('main', SOURCES_WITH_LOW_VIOLATION)
                 .withPenalty('none')
-                .withToolsConfig("""
+                .withToolsConfig('''
                     spotbugs { }
                     spotbugs {
                         ignoreFailures = false
                     }
-                """)
+                ''')
                 .build('check')
     }
 
@@ -407,6 +410,12 @@ class SpotBugsIntegrationTest {
                 }
             }
         }'''
+    }
+
+    private TestAndroidProject createProject() {
+        projectRule.newProject()
+                .withPlugin('com.github.spotbugs', SPOTBUGS_PLUGIN_VERSION)
+                .withToolsConfig('spotbugs {}')
     }
 
 }

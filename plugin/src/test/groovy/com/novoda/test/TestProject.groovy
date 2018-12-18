@@ -30,6 +30,7 @@ abstract class TestProject<T extends TestProject> {
     private final File projectDir
     private final Closure<String> template
     String additionalConfiguration = ''
+    String additionalBuildscriptConfig = ''
     Map<String, List<File>> sourceSets = [main: []]
     List<String> plugins = []
     String penalty
@@ -91,6 +92,11 @@ abstract class TestProject<T extends TestProject> {
 
     T withAdditionalConfiguration(String additionalConfiguration) {
         this.additionalConfiguration = additionalConfiguration
+        return this
+    }
+
+    public T withAdditionalBuildscriptConfig(String additionalBuildscriptConfig) {
+        this.additionalBuildscriptConfig = additionalBuildscriptConfig
         return this
     }
 
