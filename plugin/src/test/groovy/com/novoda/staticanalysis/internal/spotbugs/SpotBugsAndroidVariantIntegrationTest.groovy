@@ -182,9 +182,10 @@ class SpotBugsAndroidVariantIntegrationTest {
 
     private TestAndroidProject createProject() {
         projectRule.newProject()
-//                .withAdditionalBuildscriptConfig('''
-//                    dependencies { classpath "gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.6" }
-//                ''')
+                .withAdditionalBuildscriptConfig('''
+                    dependencies { classpath "gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.6" }
+                ''')
+        .withAdditionalConfiguration('apply plugin: "com.github.spotbugs"')
                 .withToolsConfig('spotbugs {}')
     }
 

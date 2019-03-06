@@ -4,7 +4,7 @@ class TestAndroidProject extends TestProject<TestAndroidProject> {
     private static final Closure<String> TEMPLATE = { TestAndroidProject project ->
         """
 buildscript {
-    repositories {              
+    repositories {
         gradlePluginPortal()
         google()
         jcenter()

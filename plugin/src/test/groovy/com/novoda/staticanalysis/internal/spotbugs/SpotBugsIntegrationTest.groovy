@@ -398,7 +398,7 @@ class SpotBugsIntegrationTest {
      * The custom task created in the snippet below will check whether {@code SpotBugs} tasks with
      * empty {@code source} will have empty {@code classes} too. </p>
      */
-    private String addCheckSpotbugsClassesTask() {
+    private static String addCheckSpotbugsClassesTask() {
         '''
         project.task('checkSpotbugsClasses') {
             dependsOn project.tasks.findByName('evaluateViolations')
@@ -416,6 +416,7 @@ class SpotBugsIntegrationTest {
         projectRule.newProject()
                 .withPlugin('com.github.spotbugs', SPOTBUGS_PLUGIN_VERSION)
                 .withToolsConfig('spotbugs {}')
+
     }
 
 }

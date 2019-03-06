@@ -55,6 +55,7 @@ staticAnalysis {
 
     spotbugs {
         excludeFilter rootProject.file('team-props/findbugs-excludes.xml')
+        htmlReportEnabled false
         includeVariants { variant -> variant.name.contains('debug') }
     }
 
