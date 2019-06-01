@@ -7,6 +7,7 @@ import com.novoda.staticanalysis.internal.CodeQualityConfigurator
 import com.novoda.staticanalysis.internal.findbugs.CollectFindbugsViolationsTask
 import com.novoda.staticanalysis.internal.findbugs.GenerateFindBugsHtmlReport
 import org.gradle.api.Action
+import org.gradle.api.DomainObjectSet
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.file.ConfigurableFileTree
@@ -14,6 +15,9 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.SourceSet
 
 import java.nio.file.Path
+
+import static com.novoda.staticanalysis.internal.TasksCompat.configureNamed
+import static com.novoda.staticanalysis.internal.TasksCompat.createTask
 
 class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBugsExtension> {
 
@@ -51,43 +55,56 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
     }
 
     @Override
-    protected void configureAndroidVariant(variant) {
-        SpotBugsTask task = project.tasks.maybeCreate("spotbugs${variant.name.capitalize()}", QuietSpotBugsPlugin.Task)
-        List<File> androidSourceDirs = variant.sourceSets.collect { it.javaDirectories }.flatten()
-        task.with {
-            description = "Run SpotBugs analysis for ${variant.name} classes"
-            source = androidSourceDirs
-            classpath = variant.javaCompile.classpath
-            exclude '**/*.kt'
-        }
-        sourceFilter.applyTo(task)
-        task.conventionMapping.map("classes") {
-            List<String> includes = createIncludePatterns(task.source, androidSourceDirs)
-            getAndroidClasses(variant, includes)
-        }
-        task.dependsOn variant.javaCompile
+    protected void configureAndroidWithVariants(DomainObjectSet variants) {
+        if (configured) return
+
+        variants.all { configureVariant(it) }
+        variantFilter.filteredTestVariants.all { configureVariant(it) }
+        variantFilter.filteredUnitTestVariants.all { configureVariant(it) }
+        configured = true
     }
 
-    private FileCollection getAndroidClasses(Object variant, List<String> includes) {
-        includes.isEmpty() ? project.files() : project.fileTree(variant.javaCompile.destinationDir).include(includes)
+
+    @Override
+    protected void configureVariant(variant) {
+        createToolTaskForAndroid(variant)
+        def collectViolations = createCollectViolations(getToolTaskNameFor(variant), violations)
+        evaluateViolations.dependsOn collectViolations
+    }
+
+    @Override
+    protected void createToolTaskForAndroid(variant) {
+        createTask(project, getToolTaskNameFor(variant), QuietSpotBugsPlugin.Task) { task ->
+            List<File> androidSourceDirs = variant.sourceSets.collect { it.javaDirectories }.flatten()
+            task.description = "Run SpotBugs analysis for ${variant.name} classes"
+            task.source = androidSourceDirs
+            task.classpath = variant.javaCompile.classpath
+            task.extraArgs '-auxclasspath', androidJar
+            task.conventionMapping.map("classes") {
+                List<String> includes = createIncludePatterns(task.source, androidSourceDirs)
+                getAndroidClasses(javaCompile(variant), includes)
+            }
+            sourceFilter.applyTo(task)
+            task.dependsOn javaCompile(variant)
+        }
+    }
+
+    private FileCollection getAndroidClasses(javaCompile, List<String> includes) {
+        includes.isEmpty() ? project.files() : project.fileTree(javaCompile.destinationDir).include(includes) as ConfigurableFileTree
     }
 
     @Override
     protected void configureJavaProject() {
+        super.configureJavaProject()
         project.afterEvaluate {
             project.sourceSets.each { SourceSet sourceSet ->
                 String taskName = sourceSet.getTaskName(toolName, null)
-                SpotBugsTask task = project.tasks.findByName(taskName)
-                if (task != null) {
-                    sourceFilter.applyTo(task)
-                    task.conventionMapping.map("classes", {
-                        List<File> sourceDirs = sourceSet.allJava.srcDirs.findAll {
-                            it.exists()
-                        }.toList()
+                configureNamed(project, taskName) { task ->
+                    task.conventionMapping.map("classes") {
+                        List<File> sourceDirs = sourceSet.allJava.srcDirs.findAll { it.exists() }.toList()
                         List<String> includes = createIncludePatterns(task.source, sourceDirs)
                         getJavaClasses(sourceSet, includes)
-                    })
-                    task.exclude '**/*.kt'
+                    }
                 }
             }
         }
@@ -105,54 +122,58 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
             sourceDirs
                     .findAll { Path sourceDir -> sourceFile.startsWith(sourceDir) }
                     .collect { Path sourceDir -> sourceDir.relativize(sourceFile) }
-        }
-        .flatten()
+        }.flatten()
     }
 
     private FileCollection getJavaClasses(SourceSet sourceSet, List<String> includes) {
-        includes.isEmpty() ? project.files() : createClassesTreeFrom(sourceSet).include(includes)
+        includes.isEmpty() ? project.files() : createClassesTreeFrom(sourceSet, includes)
     }
 
-    /**
-     * The simple "classes = sourceSet.output" may lead to non-existing resources directory
-     * being passed to FindBugs Ant task, resulting in an error
-     * */
-    private ConfigurableFileTree createClassesTreeFrom(SourceSet sourceSet) {
-        project.fileTree(sourceSet.output.classesDir, {
-            it.builtBy(sourceSet.output)
-        })
-    }
-
-    @Override
-    protected void configureReportEvaluation(SpotBugsTask spotbugs, Violations violations) {
-        spotbugs.ignoreFailures = true
-        spotbugs.reports.xml.enabled = true
-        spotbugs.reports.html.enabled = false
-
-        def collectViolations = createViolationsCollectionTask(spotbugs, violations)
-        evaluateViolations.dependsOn collectViolations
-
-        if (htmlReportEnabled) {
-            def generateHtmlReport = createHtmlReportTask(spotbugs, collectViolations.xmlReportFile, collectViolations.htmlReportFile)
-            collectViolations.dependsOn generateHtmlReport
-            generateHtmlReport.dependsOn spotbugs
-        } else {
-            collectViolations.dependsOn spotbugs
+    private FileCollection createClassesTreeFrom(SourceSet sourceSet, List<String> includes) {
+        return sourceSet.output.classesDirs.inject(null) { ConfigurableFileTree cumulativeTree, File classesDir ->
+            def tree = project.fileTree(classesDir)
+                    .builtBy(sourceSet.output)
+                    .include(includes) as ConfigurableFileTree
+            cumulativeTree?.plus(tree) ?: tree
         }
     }
 
-    private CollectFindbugsViolationsTask createViolationsCollectionTask(SpotBugsTask spotBugs, Violations violations) {
-        def task = project.tasks.maybeCreate("collect${spotBugs.name.capitalize()}Violations", CollectFindbugsViolationsTask)
-        task.xmlReportFile = spotBugs.reports.xml.destination
-        task.violations = violations
-        task
+    @Override
+    protected void configureToolTask(SpotBugsTask task) {
+        super.configureToolTask(task)
+        task.reports.xml.enabled = true
+        task.reports.html.enabled = false
     }
 
-    private GenerateFindBugsHtmlReport createHtmlReportTask(SpotBugsTask spotBugs, File xmlReportFile, File htmlReportFile) {
-        def task = project.tasks.maybeCreate("generate${spotBugs.name.capitalize()}HtmlReport", GenerateFindBugsHtmlReport)
-        task.xmlReportFile = xmlReportFile
-        task.htmlReportFile = htmlReportFile
-        task.classpath = spotBugs.spotbugsClasspath
-        task
+    @Override
+    protected def createCollectViolations(String taskName, Violations violations) {
+        if (htmlReportEnabled) {
+            createHtmlReportTask(taskName)
+        }
+        createTask(project, "collect${taskName.capitalize()}Violations", CollectFindbugsViolationsTask) { task ->
+            def spotbugs = project.tasks[taskName] as SpotBugsTask
+            task.xmlReportFile = spotbugs.reports.xml.destination
+            task.violations = violations
+
+            if (htmlReportEnabled) {
+                task.dependsOn project.tasks["generate${taskName.capitalize()}HtmlReport"]
+            } else {
+                task.dependsOn spotbugs
+            }
+        }
+    }
+
+    private void createHtmlReportTask(String taskName) {
+        createTask(project, "generate${taskName.capitalize()}HtmlReport", GenerateFindBugsHtmlReport) { GenerateFindBugsHtmlReport task ->
+            def spotbugs = project.tasks[taskName] as SpotBugsTask
+            task.xmlReportFile = spotbugs.reports.xml.destination
+            task.htmlReportFile = new File(task.xmlReportFile.absolutePath - '.xml' + '.html')
+            task.classpath = spotbugs.spotbugsClasspath
+            task.dependsOn spotbugs
+        }
+    }
+
+    private def getAndroidJar() {
+        "${project.android.sdkDirectory}/platforms/${project.android.compileSdkVersion}/android.jar"
     }
 }

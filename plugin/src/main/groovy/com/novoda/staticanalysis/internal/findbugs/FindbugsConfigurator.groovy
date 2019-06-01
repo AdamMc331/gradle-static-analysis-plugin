@@ -2,7 +2,6 @@ package com.novoda.staticanalysis.internal.findbugs
 
 import com.novoda.staticanalysis.Violations
 import com.novoda.staticanalysis.internal.CodeQualityConfigurator
-import com.novoda.staticanalysis.internal.CollectViolationsTask
 import org.gradle.api.Action
 import org.gradle.api.DomainObjectSet
 import org.gradle.api.NamedDomainObjectContainer
@@ -131,8 +130,7 @@ class FindbugsConfigurator extends CodeQualityConfigurator<FindBugs, FindBugsExt
             sourceDirs
                     .findAll { Path sourceDir -> sourceFile.startsWith(sourceDir) }
                     .collect { Path sourceDir -> sourceDir.relativize(sourceFile) }
-        }
-                .flatten()
+        }.flatten()
     }
 
     private FileCollection getJavaClasses(SourceSet sourceSet, List<String> includes) {
@@ -172,7 +170,6 @@ class FindbugsConfigurator extends CodeQualityConfigurator<FindBugs, FindBugsExt
             }
         }
     }
-
 
     private void createHtmlReportTask(String taskName) {
         createTask(project, "generate${taskName.capitalize()}HtmlReport", GenerateFindBugsHtmlReport) { GenerateFindBugsHtmlReport task ->
