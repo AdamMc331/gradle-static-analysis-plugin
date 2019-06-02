@@ -13,7 +13,7 @@ import static com.novoda.test.LogsSubject.assertThat
 
 class SpotBugsAndroidVariantIntegrationTest {
 
-    public static final String SPOTBUGS_PLUGIN_VERSION = '1.6.6'
+    public static final String SPOTBUGS_PLUGIN_VERSION = '2.0.0'
 
     @Rule
     public final TestProjectRule<TestAndroidProject> projectRule = TestProjectRule.forAndroidProject()

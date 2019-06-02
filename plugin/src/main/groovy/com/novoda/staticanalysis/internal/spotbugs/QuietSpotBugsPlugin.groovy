@@ -4,9 +4,6 @@ import com.github.spotbugs.SpotBugsPlugin
 import com.github.spotbugs.SpotBugsTask
 import com.novoda.staticanalysis.internal.QuietLogger
 import org.gradle.api.logging.Logger
-import org.gradle.workers.WorkerExecutor
-
-import javax.inject.Inject
 
 public class QuietSpotBugsPlugin extends SpotBugsPlugin {
 
@@ -17,9 +14,8 @@ public class QuietSpotBugsPlugin extends SpotBugsPlugin {
 
     static class Task extends SpotBugsTask {
 
-        @Inject
-        public Task(WorkerExecutor workerExecutor) {
-            super(workerExecutor)
+        public Task() {
+            super()
         }
 
         @Override

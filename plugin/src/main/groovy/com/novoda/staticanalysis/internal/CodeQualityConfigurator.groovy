@@ -9,6 +9,7 @@ import org.gradle.api.Task
 import org.gradle.api.plugins.quality.CodeQualityExtension
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.VerificationTask
+import org.gradle.api.tasks.compile.JavaCompile
 
 import static com.novoda.staticanalysis.internal.TasksCompat.configureEach
 import static com.novoda.staticanalysis.internal.TasksCompat.createTask
@@ -130,7 +131,7 @@ abstract class CodeQualityConfigurator<T extends SourceTask & VerificationTask, 
         "$toolName${named.name.capitalize()}"
     }
 
-    protected static def javaCompile(variant) {
+    protected static JavaCompile javaCompile(variant) {
         if (variant.hasProperty('javaCompileProvider')) {
             variant.javaCompileProvider.get()
         } else {

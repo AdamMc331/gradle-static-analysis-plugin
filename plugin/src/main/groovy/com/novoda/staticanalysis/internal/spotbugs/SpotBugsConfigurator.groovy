@@ -78,13 +78,12 @@ class SpotBugsConfigurator extends CodeQualityConfigurator<SpotBugsTask, SpotBug
             List<File> androidSourceDirs = variant.sourceSets.collect { it.javaDirectories }.flatten()
             task.description = "Run SpotBugs analysis for ${variant.name} classes"
             task.source = androidSourceDirs
-            task.classpath = variant.javaCompile.classpath
+            task.classpath = javaCompile(variant).classpath
             task.extraArgs '-auxclasspath', androidJar
             task.conventionMapping.map("classes") {
                 List<String> includes = createIncludePatterns(task.source, androidSourceDirs)
                 getAndroidClasses(javaCompile(variant), includes)
             }
-            sourceFilter.applyTo(task)
             task.dependsOn javaCompile(variant)
         }
     }

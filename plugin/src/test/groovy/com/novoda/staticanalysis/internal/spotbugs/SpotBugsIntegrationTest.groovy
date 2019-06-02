@@ -17,7 +17,7 @@ import static com.novoda.test.TestProjectSubject.assumeThat
 @RunWith(Parameterized.class)
 class SpotBugsIntegrationTest {
 
-    public static final String SPOTBUGS_PLUGIN_VERSION = '1.6.6'
+    public static final String SPOTBUGS_PLUGIN_VERSION = '2.0.0'
 
     @Parameterized.Parameters(name = '{0}')
     static Iterable<TestProjectRule> rules() {
